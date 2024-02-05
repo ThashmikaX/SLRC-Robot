@@ -13,6 +13,10 @@ void driveMotor(uint8_t leftSpeed, uint8_t rightSpeed)
   right.setSpeed(rightSpeed);
   left.run(BACKWARD);
   right.run(BACKWARD);
+
+  Serial.print(leftSpeed);
+  Serial.print('\t');
+  Serial.println(rightSpeed);
 }
 
 

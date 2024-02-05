@@ -41,8 +41,12 @@ QTRSensors qtr;
 const uint8_t SensorCount = 8;
 uint16_t sensorValues[SensorCount];
 
-float kP = 0.02;
-uint16_t initialPos = 0;
+float kP = 0.3;
+float kD = 0;
+
+float initialPos = 0;
+
+float prevError = 0;
 
 void setup()
 {
@@ -94,7 +98,7 @@ void loop()
 {
   // read calibrated sensor values and obtain a measure of the line position
   // from 0 to 5000 (for a white line, use readLineWhite() instead)
-  uint16_t position = qtr.readLineBlack(sensorValues);
+  float err = qtr.readLineBlack(sensorValues);
 
   // print the sensor values as numbers from 0 to 1000, where 0 means maximum
   // reflectance and 1000 means minimum reflectance, followed by the line
@@ -106,17 +110,14 @@ void loop()
   // }
   //Serial.println(position);
 
-uint8_t err=(initialPos-position)*kP;
-  float leftSpeed = 120+err;
-  float rightSpeed = 120-err;
+float diff=(initialPos-err)*kP + (err-prevError)*kD;
+  float leftSpeed = 120-diff;
+  float rightSpeed = 120+diff;
 
   
-  
-  Serial.print(leftSpeed);
-  Serial.print('\t');
-  Serial.println(rightSpeed);
-  
-  driveMotor(120, 120);
 
-  delay(250);
+  prevError = err;
+  driveMotor(leftSpeed, rightSpeed);
+
+  
 }
