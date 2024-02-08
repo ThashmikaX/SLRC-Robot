@@ -9,14 +9,36 @@ AF_DCMotor right(4);
 
 void driveMotor(uint8_t leftSpeed, uint8_t rightSpeed)
 {
-  left.setSpeed(leftSpeed);
-  right.setSpeed(rightSpeed);
+  left.setSpeed(rightSpeed);
+  right.setSpeed(leftSpeed);
   left.run(BACKWARD);
   right.run(BACKWARD);
 
-  Serial.print(leftSpeed);
-  Serial.print('\t');
-  Serial.println(rightSpeed);
+  // Serial.print(leftSpeed);
+  // Serial.print('\t');
+  // Serial.println(rightSpeed);
+}
+
+void turnRight(uint8_t speed)
+{
+  left.setSpeed(speed);
+  right.setSpeed(speed);
+  left.run(BACKWARD);
+  right.run(FORWARD);
+}
+
+void turnLeft(uint8_t speed)
+{
+  left.setSpeed(speed);
+  right.setSpeed(speed);
+  left.run(FORWARD);
+  right.run(BACKWARD);
+}
+
+void stopMotor()
+{
+  left.run(RELEASE);
+  right.run(RELEASE);
 }
 
 
