@@ -10,11 +10,24 @@
 
 #define Buz 15
 
+#define QTR0 0
+#define QTR1 1
+#define QTR2 2
+#define QTR3 3
+#define QTR4 4
+#define QTR5 5
+#define QTR6 6
+#define QTR7 7
+
+
 
 QTRSensors qtr;
 
 const uint8_t SensorCount = 8;
 uint16_t sensorValues[SensorCount];
+
+uint16_t sensorThresholds[SensorCount];
+
 
 
 float initialPos = 0;
@@ -61,6 +74,7 @@ void setup()
   Serial.begin(9600);
   for (uint8_t i = 0; i < SensorCount; i++)
   {
+
     Serial.print(qtr.calibrationOn.minimum[i]);
     Serial.print(' ');
   }
@@ -72,6 +86,15 @@ void setup()
     Serial.print(qtr.calibrationOn.maximum[i]);
     Serial.print(' ');
   }
+
+  //Take threshold values
+  for (uint8_t i = 0; i < SensorCount; i++)
+  {
+    sensorThresholds[i] = (qtr.calibrationOn.minimum[i]+qtr.calibrationOn.maximum[i]);
+    Serial.print(sensorThresholds[i]);
+    Serial.print(' ');
+  }
+
   Serial.println();
   Serial.println();
   delay(1000);
@@ -142,26 +165,18 @@ void loop()
 //   // }
 //   //Serial.println(position);
 
-// float diff=(initialPos-err)*kP + (err-prevError)*kD;
-//   float leftSpeed = 120-diff;
-//   float rightSpeed = 120+diff;
-
-  
-
-//   prevError = err;
-//   driveMotor(leftSpeed, rightSpeed);
 
   // PID_control();
 
-  turnLeft(200);
-
-  delay(4000);
-   stopMotor();
-  delay(4000);
-  turnRight(200);
-  delay(4000);
-  stopMotor();
-  delay(4000);
+  if(sensorValues[QTR0]<sensorThresholds[QTR0] && sensorValues[QTR7]<sensorThresholds[QTR7]){
+    PID_control();
+  }else
+  if(sensorValues[QTR0]<sensorThresholds[QTR0] && sensorValues[QTR1]<sensorThresholds[QTR1] && sensorValues[QTR2]<sensorThresholds[QTR2] && sensorValues[QTR3]<sensorThresholds[QTR3]
+  && sensorValues[QTR7]>sensorThresholds[QTR7]){
+   //left turn found
+   driveMotor(150,-150);
+    
+  }
 }
 
 
