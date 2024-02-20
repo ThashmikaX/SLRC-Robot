@@ -41,4 +41,16 @@ void stopMotor()
   right.run(RELEASE);
 }
 
+void driveBackMotor(uint8_t leftSpeed, uint8_t rightSpeed)
+{
+  left.setSpeed(rightSpeed);
+  right.setSpeed(leftSpeed);
+  left.run(FORWARD);
+  right.run(FORWARD);
+
+  // Serial.print(leftSpeed);
+  // Serial.print('\t');
+  // Serial.println(rightSpeed);
+}
+
 

@@ -51,7 +51,7 @@ void GetColors()
      Serial.println("Unknown");                  //if the color is not recognized, you can add as many as you want
 
 
-  delay(2000);                                   //2s delay you can modify if you  want
+  delay(100);                                   //2s delay you can modify if you  want
 }
 
 //Here's an  example how to understand that expression above,

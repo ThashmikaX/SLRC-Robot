@@ -4,6 +4,6 @@
 #include <Arduino.h>
 
 void irSetup();
-void irIndicate();
+int irIndicate();
 
 #endif // IR_MODULE_H
