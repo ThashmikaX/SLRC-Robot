@@ -5,8 +5,8 @@
  */
 #include <color.h>
 
-int  Red=0, Blue=0, Green=0;  //RGB values 
-
+int  Red=0, Blue=0, Green=0;  //RGB values
+uint8_t color = 4;
 void SetColorSensor()
 {
     pinMode(s0,OUTPUT);    //pin modes
@@ -22,7 +22,7 @@ void SetColorSensor()
 
 }
 
-void GetColors()  
+uint8_t GetColors()  
 {    
   digitalWrite(s2,  LOW);                                           //S2/S3 levels define which set  of photodiodes we are using LOW/LOW is for RED LOW/HIGH is for Blue and HIGH/HIGH  is for green 
   digitalWrite(s3, LOW);                                           
@@ -36,22 +36,21 @@ void GetColors()
   delay(20);  
 
   if (Red <=15 && Green <=15 && Blue <=15)         //If the values  are low it's likely the white color (all the colors are present)
-      Serial.println("White");                    
-      
+             color = 0; //white
+
   else if (Red<Blue && Red<=Green && Red<23)      //if  Red value is the lowest one and smaller thant 23 it's likely Red
-      Serial.println("Red");
+             color = 1;//red
 
   else if (Blue<Green && Blue<Red && Blue<20)    //Same thing for Blue
-      Serial.println("Blue");
+             color = 2; //blue
 
   else if (Green<Red && Green-Blue<= 8)           //Green it was a little tricky,  you can do it using the same method as above (the lowest), but here I used a reflective  object
-      Serial.println("Green");                    //which means the  blue value is very low too, so I decided to check the difference between green and  blue and see if it's acceptable
+             color = 3;//green                    //which means the  blue value is very low too, so I decided to check the difference between green and  blue and see if it's acceptable
 
   else
-     Serial.println("Unknown");                  //if the color is not recognized, you can add as many as you want
+            color = 4;//unknown                  //if the color is not recognized, you can add as many as you want
 
-
-  delay(100);                                   //2s delay you can modify if you  want
+  return color;
 }
 
 //Here's an  example how to understand that expression above,

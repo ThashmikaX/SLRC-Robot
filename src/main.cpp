@@ -35,7 +35,7 @@ uint16_t sensorThresholds[SensorCount];
 float initialPos = 0;
 
 
-float Kp = 0.01; 
+float Kp = 0.03; 
 float Ki = 0; 
 float Kd = 7; 
 int P;
@@ -267,17 +267,25 @@ void turn(char dir)
 
 void loop()
 {
+  
 
- 
+  Serial.println(GetColors());
   
   
 
   while (1)
   {
-  follow_line();
-   qtr.readLineWhite(sensorValues);
   
-    if (sensorValues[15] < 700){
+
+     if (GetColors()==2)
+     {
+      
+      stopMotor();
+
+     }else{
+      follow_line();
+     qtr.readLineWhite(sensorValues);
+      if (sensorValues[15] < 700){
       stopMotor();
       driveBackMotor(200,200);
       delay(200);
@@ -288,6 +296,8 @@ void loop()
     }else{
       digitalWrite(Buz, LOW);
     }
+     }
+    
       
   }
 

@@ -3,14 +3,15 @@
 
 #include <Arduino.h>
 
-void GetColors();
+uint8_t GetColors();
 void SetColorSensor();
 
-#define s0 22      //Module pins  wiring
-#define s1 23
-#define s2 24
-#define s3 25
-#define out 26
+#define s0 24      //Module pins  wiring
+#define s1 26
+#define s2 28
+#define s3 30
+#define out 32
+
 
 #endif // PINS_H
 
