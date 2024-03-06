@@ -35,7 +35,7 @@ uint16_t sensorThresholds[SensorCount];
 float initialPos = 0;
 
 
-float Kp = 0.03; 
+float Kp = 0.1; 
 float Ki = 0; 
 float Kd = 7; 
 int P;
@@ -45,10 +45,10 @@ int D;
 
 int lastError = 0;
 
-const uint8_t maxspeeda = 150;
-const uint8_t maxspeedb = 150;
-const uint8_t basespeeda = 100;
-const uint8_t basespeedb = 100;
+const uint8_t maxspeeda = 180;
+const uint8_t maxspeedb = 180;
+const uint8_t basespeeda = 110;
+const uint8_t basespeedb = 110;
 
 
 void setup()
@@ -110,6 +110,9 @@ void setup()
      initialPos=qtr.readLineWhite(sensorValues);
       delay(100);
   }
+
+  //servo
+  setupServo(); 
 }
 
 
@@ -269,40 +272,34 @@ void loop()
 {
   
 
-  Serial.println(GetColors());
+  //Serial.println(GetColors());
   
   
 
-  while (1)
-  {
+  // while (1)
+  // {
   
 
-     if (GetColors()==2)
-     {
-      
-      stopMotor();
-
-     }else{
-      follow_line();
-     qtr.readLineWhite(sensorValues);
-      if (sensorValues[15] < 700){
-      stopMotor();
-      driveBackMotor(200,200);
-      delay(200);
-      //delay(2000);
-      digitalWrite(Buz, HIGH);
-      turn('R');
-      break;
-    }else{
-      digitalWrite(Buz, LOW);
-    }
-     }
+  //     follow_line();
+  //    qtr.readLineWhite(sensorValues);
+  //     if (sensorValues[15] < 700){
+  //     stopMotor();
+  //     driveBackMotor(200,200);
+  //     delay(200);
+  //     //delay(2000);
+  //     digitalWrite(Buz, HIGH);
+  //     turn('R');
+  //     break;
+  //   }else{
+  //     digitalWrite(Buz, LOW);
+  //   }
+     
     
       
-  }
+  // }
 
   
-  
+  grip1(100);
 
   
 }
