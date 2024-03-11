@@ -3,9 +3,6 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#include <QTRSensors.h>
-#include <QTRSensors.h>
-
 #include <motor.h>
 #include <ir_module.h>
 #include <color.h>
@@ -21,8 +18,6 @@
 #define QTR6 6
 #define QTR7 7
 
-
-
 QTRSensors qtr;
 
 const uint8_t SensorCount = 16;
@@ -30,10 +25,7 @@ uint16_t sensorValues[SensorCount];
 
 uint16_t sensorThresholds[SensorCount];
 
-
-
 float initialPos = 0;
-
 
 float Kp = 0.1; 
 float Ki = 0; 
@@ -42,14 +34,12 @@ int P;
 int I;
 int D;
 
-
 int lastError = 0;
 
 const uint8_t maxspeeda = 180;
 const uint8_t maxspeedb = 180;
 const uint8_t basespeeda = 110;
 const uint8_t basespeedb = 110;
-
 
 void setup()
 {
@@ -61,12 +51,10 @@ void setup()
   qtr.setEmitterPin(2);
   qtr.setEmitterPin(9);
 
-
   delay(500);
   pinMode(Buz, OUTPUT);
   digitalWrite(Buz, HIGH); // turn on Arduino's LED to indicate we are in calibration mode
 
-  
   for (uint16_t i = 0; i < 200; i++)
   {
     qtr.calibrate();
@@ -101,8 +89,6 @@ void setup()
     Serial.print(' ');
   }
 
-
-
   Serial.println();
   delay(1000);
 
@@ -114,8 +100,6 @@ void setup()
   //servo
   setupServo(); 
 }
-
-
 void PID_control() {
 
   uint16_t position = qtr.readLineWhite(sensorValues); 
