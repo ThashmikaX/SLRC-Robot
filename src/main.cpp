@@ -31,7 +31,7 @@ float initialPos = 0;
 
 float Kp = 0.1; 
 float Ki = 0; 
-float Kd = 0.5; 
+float Kd = 1.1; 
 int P;
 int I;
 int D;
@@ -43,16 +43,21 @@ const uint8_t maxspeedb = 220;
 const uint8_t basespeeda = 150;
 const uint8_t basespeedb = 150;
 
+bool firstStep = true;
+bool secondStep = false;
+bool thirdStep = false;
+bool fourthStep = false;
+
 void setup()
 {
   irSetup();
   forwardDistanceSetup();
- // SetColorSensor();
+  SetColorSensor();
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A8, A9, A10, A11, A12,A13,A14,A15,A0, A1, A2, A3, A4, A5,A6,A7}, SensorCount);
   qtr.setEmitterPin(2);
-  qtr.setEmitterPin(13);
+  //qtr.setEmitterPin(13);
 
   delay(500);
   pinMode(Buz, OUTPUT);
@@ -119,12 +124,12 @@ void PID_control() {
   int motorspeeda = basespeeda + motorspeed;
   int motorspeedb = basespeedb - motorspeed;
 
-  for (uint8_t i = 0; i < SensorCount; i++)
-  {
-    Serial.print(sensorValues[i]);
-    Serial.print('\t');
-  }
-  Serial.println(position);
+  // for (uint8_t i = 0; i < SensorCount; i++)
+  // {
+  //   Serial.print(sensorValues[i]);
+  //   Serial.print('\t');
+  // }
+  // Serial.println(position);
 
   
 
@@ -149,7 +154,7 @@ void PID_control() {
   // Serial.print(motorspeedb);
   // Serial.print('\t');
   // Serial.println(position);
-  //driveMotor(motorspeeda, motorspeedb);
+  driveMotor(motorspeeda, motorspeedb);
 }
 
 uint16_t line_position = 0;
@@ -159,7 +164,7 @@ void follow_line() // follow the line
   
   int lastError = 0;
 
-  while (1)
+  while (firstStep)
   {
 
     line_position = qtr.readLineWhite(sensorValues);
@@ -189,11 +194,21 @@ void follow_line() // follow the line
     Serial.print('\t');
     Serial.println(leftMotorSpeed);
   
-    //driveMotor(rightMotorSpeed, leftMotorSpeed);
+    driveMotor(rightMotorSpeed, leftMotorSpeed);
 
     lastError = error;
 
     qtr.readLineWhite(sensorValues);
+
+    if(getForwardDistance()<10){
+      stopMotor();
+      firstStep=false;
+
+      delay(1000);
+      
+    }
+
+
     // if (sensorValues[0] > sensorThresholds[0] || sensorValues[10] > sensorThresholds[10])
     // {
     //   driveMotor(150, 150);
@@ -257,7 +272,23 @@ void turn(char dir)
   // Turn right 180deg to go back
   case 'B':
     
+     turnRight(200);
 
+      line_position = qtr.readLineWhite(sensorValues);
+
+      while (sensorValues[15] < 700)  // wait for outer most sensor to find the line
+      {
+        line_position = qtr.readLineWhite(sensorValues);
+      }
+      line_position = qtr.readLineWhite(sensorValues);
+
+      while (sensorValues[14] < 700 || sensorValues[13] < 700) // wait for outer most sensor to find the line
+      {
+        line_position = qtr.readLineWhite(sensorValues);
+      }
+
+      
+      break;
    
     break;
 
@@ -267,10 +298,7 @@ void turn(char dir)
   }
 }
 
-bool firstStep = true;
-bool secondStep = false;
-bool thirdStep = false;
-bool fourthStep = false;
+
 
 void loop()
 {
@@ -307,12 +335,55 @@ void loop()
 
   while (firstStep)
   {
-    PID_control();
+    follow_line();
 
   }
+  if(GetColorsForward()==3){
+        driveBackMotor(200,200);
+        delay(100);
+        stopMotor();
+        firstStep=true;
+        secondStep=true;
+      }
+
+  delay(1000);
+
+  while (secondStep){
+    turn('B');
+    qtr.readLineWhite(sensorValues);
+    if(sensorValues[12]<700){
+      stopMotor();
+      delay(1000);
+      secondStep=false;
+      thirdStep=true;
+    }
+  }
+
+  delay(1000);
+
+  while (1)
+  {
   
-  //Serial.print(getForwardDistance());
-  
+
+      follow_line();
+     qtr.readLineWhite(sensorValues);
+      if (sensorValues[15] < 700){
+      stopMotor();
+      driveBackMotor(200,200);
+      delay(200);
+      //delay(2000);
+      digitalWrite(Buz, HIGH);
+      turn('R');
+      
+    }else{
+      digitalWrite(Buz, LOW);
+    }
+     
+    
+      
+  }
+    
+
 }
 
 
