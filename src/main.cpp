@@ -10,6 +10,8 @@
 #include <ir_module.h>
 #include <color.h>
 
+#include <Ultrasonic.h>
+
 #define Buz 22
 
 #define QTR0 0
@@ -37,7 +39,7 @@ float initialPos = 0;
 
 float Kp = 0.1; 
 float Ki = 0; 
-float Kd = 7; 
+float Kd = 0.5; 
 int P;
 int I;
 int D;
@@ -45,21 +47,22 @@ int D;
 
 int lastError = 0;
 
-const uint8_t maxspeeda = 180;
-const uint8_t maxspeedb = 180;
-const uint8_t basespeeda = 110;
-const uint8_t basespeedb = 110;
+const uint8_t maxspeeda = 220;
+const uint8_t maxspeedb = 220;
+const uint8_t basespeeda = 150;
+const uint8_t basespeedb = 150;
 
 
 void setup()
 {
   irSetup();
-  SetColorSensor();
+  forwardDistanceSetup();
+ // SetColorSensor();
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A8, A9, A10, A11, A12,A13,A14,A15,A0, A1, A2, A3, A4, A5,A6,A7}, SensorCount);
   qtr.setEmitterPin(2);
-  qtr.setEmitterPin(9);
+  qtr.setEmitterPin(13);
 
 
   delay(500);
@@ -112,7 +115,7 @@ void setup()
   }
 
   //servo
-  setupServo(); 
+  //setupServo(); 
 }
 
 
@@ -126,11 +129,11 @@ void PID_control() {
   P = error;
   I = I + error;
   D = error - lastError;
-  lastError = error;
+  
   int motorspeed = P*Kp + I*Ki + D*Kd;
   
-  int motorspeeda = basespeeda - motorspeed;
-  int motorspeedb = basespeedb + motorspeed;
+  int motorspeeda = basespeeda + motorspeed;
+  int motorspeedb = basespeedb - motorspeed;
 
   for (uint8_t i = 0; i < SensorCount; i++)
   {
@@ -141,11 +144,7 @@ void PID_control() {
 
   
 
-  // Serial.print(motorspeeda);
-  // Serial.print('\t');
-  // Serial.print(motorspeedb);
-  // Serial.print('\t');
-  // Serial.println(position);
+
 
   
   if (motorspeeda > maxspeeda) {
@@ -160,6 +159,12 @@ void PID_control() {
   if (motorspeedb < 0) {
     motorspeedb = 0;
   } 
+  lastError = error;
+  //   Serial.print(motorspeeda);
+  // Serial.print('\t');
+  // Serial.print(motorspeedb);
+  // Serial.print('\t');
+  // Serial.println(position);
   //driveMotor(motorspeeda, motorspeedb);
 }
 
@@ -181,31 +186,41 @@ void follow_line() // follow the line
     int motorSpeed = Kp * error + Kd * error1 + Ki * error2;
     int rightMotorSpeed = basespeeda - motorSpeed;
     int leftMotorSpeed = basespeedb + motorSpeed;
-    if (rightMotorSpeed > maxspeeda)
+    if (rightMotorSpeed > maxspeeda){
       rightMotorSpeed = maxspeeda; 
-    if (leftMotorSpeed > maxspeedb)
+    }
+    if (leftMotorSpeed > maxspeedb){
       leftMotorSpeed = maxspeedb; 
-    if (rightMotorSpeed < 0)
+    }
+    if (rightMotorSpeed < 0){
       rightMotorSpeed = 0;
-    if (leftMotorSpeed < 0)
+
+    }
+    if (leftMotorSpeed < 0){
       leftMotorSpeed = 0;
+
+    }
     
-    driveMotor(rightMotorSpeed, leftMotorSpeed);
+    Serial.print(rightMotorSpeed);
+    Serial.print('\t');
+    Serial.println(leftMotorSpeed);
+  
+    //driveMotor(rightMotorSpeed, leftMotorSpeed);
 
     lastError = error;
 
     qtr.readLineWhite(sensorValues);
-    if (sensorValues[0] > sensorThresholds[0] || sensorValues[10] > sensorThresholds[10])
-    {
-      driveMotor(150, 150);
-      return;
-    }
-    if (sensorValues[0] < sensorThresholds[0] && sensorValues[1] < sensorThresholds[1] && sensorValues[2] < sensorThresholds[2] && sensorValues[3] < sensorThresholds[3] && sensorValues[4] < sensorThresholds[4] && sensorValues[5] < sensorThresholds[5] && sensorValues[6] < sensorThresholds[6]&& sensorValues[7] < sensorThresholds[7]&& sensorValues[8] < sensorThresholds[8]&& sensorValues[9] < sensorThresholds[9]&& sensorValues[10] < sensorThresholds[10])
-    {
+    // if (sensorValues[0] > sensorThresholds[0] || sensorValues[10] > sensorThresholds[10])
+    // {
+    //   driveMotor(150, 150);
+    //   return;
+    // }
+    // if (sensorValues[0] < sensorThresholds[0] && sensorValues[1] < sensorThresholds[1] && sensorValues[2] < sensorThresholds[2] && sensorValues[3] < sensorThresholds[3] && sensorValues[4] < sensorThresholds[4] && sensorValues[5] < sensorThresholds[5] && sensorValues[6] < sensorThresholds[6]&& sensorValues[7] < sensorThresholds[7]&& sensorValues[8] < sensorThresholds[8]&& sensorValues[9] < sensorThresholds[9]&& sensorValues[10] < sensorThresholds[10])
+    // {
 
-      driveMotor(150, 150);
-      return;
-    }
+    //   driveMotor(150, 150);
+    //   return;
+    // }
   }
 }
 
@@ -268,6 +283,11 @@ void turn(char dir)
   }
 }
 
+bool firstStep = true;
+bool secondStep = false;
+bool thirdStep = false;
+bool fourthStep = false;
+
 void loop()
 {
   
@@ -299,8 +319,15 @@ void loop()
   // }
 
   
-  grip1(100);
+  // grip1(100);
 
+  while (firstStep)
+  {
+    PID_control();
+
+  }
+  
+  //Serial.print(getForwardDistance());
   
 }
 
