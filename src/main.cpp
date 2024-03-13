@@ -159,13 +159,16 @@ void PID_control() {
 
 uint16_t line_position = 0;
 
+  //int lastError = 0;
+
 void follow_line() // follow the line
 {
   
-  int lastError = 0;
 
-  while (firstStep)
-  {
+
+
+    
+       
 
     line_position = qtr.readLineWhite(sensorValues);
 
@@ -190,9 +193,7 @@ void follow_line() // follow the line
 
     }
     
-    Serial.print(rightMotorSpeed);
-    Serial.print('\t');
-    Serial.println(leftMotorSpeed);
+  
   
     driveMotor(rightMotorSpeed, leftMotorSpeed);
 
@@ -200,27 +201,17 @@ void follow_line() // follow the line
 
     qtr.readLineWhite(sensorValues);
 
-    if(getForwardDistance()<10){
-      stopMotor();
-      firstStep=false;
+   
+    
 
-      delay(1000);
-      
-    }
-
-
-    // if (sensorValues[0] > sensorThresholds[0] || sensorValues[10] > sensorThresholds[10])
-    // {
-    //   driveMotor(150, 150);
-    //   return;
-    // }
+    
     // if (sensorValues[0] < sensorThresholds[0] && sensorValues[1] < sensorThresholds[1] && sensorValues[2] < sensorThresholds[2] && sensorValues[3] < sensorThresholds[3] && sensorValues[4] < sensorThresholds[4] && sensorValues[5] < sensorThresholds[5] && sensorValues[6] < sensorThresholds[6]&& sensorValues[7] < sensorThresholds[7]&& sensorValues[8] < sensorThresholds[8]&& sensorValues[9] < sensorThresholds[9]&& sensorValues[10] < sensorThresholds[10])
     // {
 
     //   driveMotor(150, 150);
     //   return;
     // }
-  }
+  
 }
 
 void turn(char dir)
@@ -299,6 +290,7 @@ void turn(char dir)
 }
 
 
+  bool gobackone=true;
 
 void loop()
 {
@@ -333,16 +325,24 @@ void loop()
   
   // grip1(100);
 
+
+  
+
   while (firstStep)
   {
     follow_line();
+    if(getForwardDistance()<5){
+      stopMotor();
+      firstStep=false;
 
+      delay(1000);
+      
+    }
   }
   if(GetColorsForward()==3){
         driveBackMotor(200,200);
-        delay(100);
+        delay(150);
         stopMotor();
-        firstStep=true;
         secondStep=true;
       }
 
@@ -361,27 +361,70 @@ void loop()
 
   delay(1000);
 
-  while (1)
+  //warining
+  bool firstTurnTaken=false;
+  bool secondTurnTaken=false;
+
+  while (thirdStep)
   {
   
 
+
       follow_line();
      qtr.readLineWhite(sensorValues);
+
       if (sensorValues[15] < 700){
       stopMotor();
       driveBackMotor(200,200);
       delay(200);
       //delay(2000);
-      digitalWrite(Buz, HIGH);
       turn('R');
       
-    }else{
-      digitalWrite(Buz, LOW);
     }
-     
+
+
+
+    if(sensorValues[4]<700 && sensorValues[12]<700){
+      stopMotor();
+      thirdStep=false;
+      fourthStep=true;
+    }
+
+
+    
     
       
   }
+
+  while (fourthStep)
+  {
+
+    
+
+    follow_line();
+     qtr.readLineWhite(sensorValues);
+    if (sensorValues[0] < 700){
+      stopMotor();
+      driveBackMotor(200,200);
+      delay(200);
+      //delay(2000);
+      turn('L');
+      
+    }else
+    if(gobackone){
+      stopMotor();
+      driveBackMotor(200,200);
+      delay(200);
+      gobackone=false;
+    }else{
+      
+    }
+
+   
+  }
+  
+
+  
     
 
 }
