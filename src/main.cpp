@@ -417,7 +417,10 @@ void loop()
       delay(200);
       gobackone=false;
     }else{
-      
+      if(GetColorsFloor()==2){
+        stopMotor();
+        fourthStep=false;
+      }
     }
 
    
