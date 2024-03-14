@@ -30,7 +30,7 @@ uint16_t sensorThresholds[SensorCount];
 float initialPos = 0;
 
 float Kp = 0.1; 
-float Ki = 0; 
+float Ki = 0.001; 
 float Kd = 1.1; 
 int P;
 int I;
@@ -40,8 +40,8 @@ int lastError = 0;
 
 const uint8_t maxspeeda = 220;
 const uint8_t maxspeedb = 220;
-const uint8_t basespeeda = 150;
-const uint8_t basespeedb = 150;
+const uint8_t basespeeda = 160;
+const uint8_t basespeedb = 130;
 
 bool firstStep = true;
 bool secondStep = false;
@@ -52,7 +52,7 @@ void setup()
 {
   irSetup();
   forwardDistanceSetup();
-  SetColorSensor();
+ 
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A8, A9, A10, A11, A12,A13,A14,A15,A0, A1, A2, A3, A4, A5,A6,A7}, SensorCount);
@@ -104,6 +104,19 @@ void setup()
      initialPos=qtr.readLineWhite(sensorValues);
       delay(100);
   }
+
+  //buz 4 times
+  digitalWrite(Buz, HIGH);
+  delay(1000);
+  digitalWrite(Buz, LOW);
+  delay(1000);
+  digitalWrite(Buz, HIGH);
+  delay(1000);
+  digitalWrite(Buz, LOW);
+  delay(1000);
+  digitalWrite(Buz, HIGH);
+  delay(1000);
+  digitalWrite(Buz, LOW);
 
   //servo
   //setupServo(); 
@@ -163,12 +176,6 @@ uint16_t line_position = 0;
 
 void follow_line() // follow the line
 {
-  
-
-
-
-    
-       
 
     line_position = qtr.readLineWhite(sensorValues);
 
@@ -201,7 +208,18 @@ void follow_line() // follow the line
 
     qtr.readLineWhite(sensorValues);
 
-   
+    if (sensorValues[3] < 700)
+    {
+      driveMotor(150, 150);
+      return;
+    }
+
+    // if (sensorValues[0] < 700 || sensorValues[1] < 700 || sensorValues[2] < 700 || sensorValues[3] < 700 || sensorValues[4] < 700 || sensorValues[5] < 700 || sensorValues[6] < 700 || sensorValues[7] < 700 || sensorValues[8])
+    // {
+
+    //   driveMotor(150, 150);
+    //   return;
+    // }
     
 
     
@@ -328,6 +346,10 @@ void loop()
 
   
 
+
+  driveMotor(160, 140);
+  delay(1000);
+
   while (firstStep)
   {
     follow_line();
@@ -339,6 +361,9 @@ void loop()
       
     }
   }
+
+  setupFrontColorSensor();
+  delay(1000);
   if(GetColorsForward()==3){
         driveBackMotor(200,200);
         delay(150);
@@ -351,14 +376,14 @@ void loop()
   while (secondStep){
     turn('B');
     qtr.readLineWhite(sensorValues);
-    if(sensorValues[12]<700){
+    if(sensorValues[10]<700){
       stopMotor();
       delay(1000);
       secondStep=false;
       thirdStep=true;
     }
   }
-
+  setupFloorColorSensor();
   delay(1000);
 
   //warining
@@ -373,6 +398,15 @@ void loop()
       follow_line();
      qtr.readLineWhite(sensorValues);
 
+     if(sensorValues[0] < 700 && sensorValues[7]<700){
+      stopMotor();
+      driveBackMotor(200,200);
+      delay(200);
+      //delay(2000);
+      turn('L');
+      firstTurnTaken=true;
+     }
+    else
       if (sensorValues[15] < 700){
       stopMotor();
       driveBackMotor(200,200);
@@ -382,49 +416,38 @@ void loop()
       
     }
 
-
-
-    if(sensorValues[4]<700 && sensorValues[12]<700){
-      stopMotor();
-      thirdStep=false;
-      fourthStep=true;
-    }
-
-
+   
     
     
       
   }
 
-  while (fourthStep)
-  {
+  // while (fourthStep)
+  // {
 
     
 
-    follow_line();
-     qtr.readLineWhite(sensorValues);
-    if (sensorValues[0] < 700){
-      stopMotor();
-      driveBackMotor(200,200);
-      delay(200);
-      //delay(2000);
-      turn('L');
+  //   follow_line();
+  //    qtr.readLineWhite(sensorValues);
+  //   if (sensorValues[0] < 700){
+  //     stopMotor();
+  //     driveBackMotor(200,200);
+  //     delay(200);
+  //     //delay(2000);
+  //     turn('L');
       
-    }else
-    if(gobackone){
-      stopMotor();
-      driveBackMotor(200,200);
-      delay(200);
-      gobackone=false;
-    }else{
-      if(GetColorsFloor()==2){
-        stopMotor();
-        fourthStep=false;
-      }
-    }
+  //   }else
+  //   if(gobackone){
+  //     stopMotor();
+  //     driveBackMotor(200,200);
+  //     delay(200);
+  //     gobackone=false;
+  //   }else{
+      
+  //   }
 
    
-  }
+  // }
   
 
   

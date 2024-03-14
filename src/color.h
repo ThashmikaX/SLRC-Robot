@@ -8,6 +8,8 @@
 uint8_t GetColorsFloor();
 uint8_t GetColorsForward();
 void SetColorSensor();
+void setupFrontColorSensor();
+void setupFloorColorSensor();
 
 #define s1_0 24      //Module pins  wiring
 #define s1_1 26

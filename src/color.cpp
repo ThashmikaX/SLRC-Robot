@@ -26,6 +26,28 @@ void SetColorSensor()
 
 }
 
+void setupFrontColorSensor(){
+   pinMode(s2_0,OUTPUT);    //pin modes
+    pinMode(s2_1,OUTPUT);
+    pinMode(s2_2,OUTPUT);
+    pinMode(s2_3,OUTPUT);
+    pinMode(out2,INPUT);
+   
+    digitalWrite(s2_0,HIGH); //Putting S0/S1 on HIGH/HIGH levels  means the output frequency scalling is at 100% (recommended)
+    digitalWrite(s2_1,HIGH);   //LOW/LOW is off HIGH/LOW is 20% and LOW/HIGH is  2%
+}
+
+void setupFloorColorSensor(){
+   pinMode(s1_0,OUTPUT);    //pin modes
+    pinMode(s1_1,OUTPUT);
+    pinMode(s1_2,OUTPUT);
+    pinMode(s1_3,OUTPUT);
+    pinMode(out1,INPUT);
+   
+    digitalWrite(s1_0,HIGH); //Putting S0/S1 on HIGH/HIGH levels  means the output frequency scalling is at 100% (recommended)
+    digitalWrite(s1_1,HIGH);  //LOW/LOW is off HIGH/LOW is 20% and LOW/HIGH is  2%
+}
+
 uint8_t GetColorsFloor()  
 {
   int  Red=0, Blue=0, Green=0;  //RGB values
