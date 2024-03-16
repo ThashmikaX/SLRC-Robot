@@ -20,6 +20,8 @@
 #define QTR6 6
 #define QTR7 7
 
+#define threshold 700
+
 QTRSensors qtr;
 
 const uint8_t SensorCount = 16;
@@ -28,25 +30,24 @@ uint16_t sensorValues[SensorCount];
 uint16_t sensorThresholds[SensorCount];
 
 float initialPos = 0;
+unsigned int line_position = 0;
 
-float Kp = 0.1; 
-float Ki = 0.001; 
-float Kd = 1.1; 
+
+float Kp = 0.2; 
+float Ki = 0; 
+float Kd = 2; 
 int P;
 int I;
 int D;
 
 int lastError = 0;
 
-const uint8_t maxspeeda = 220;
-const uint8_t maxspeedb = 220;
-const uint8_t basespeeda = 160;
-const uint8_t basespeedb = 130;
+const uint8_t rightMaxSpeed = 220;
+const uint8_t leftMaxSpeed = 220;
+const uint8_t rightBaseSpeed = 160;
+const uint8_t leftBaseSpeed = 130;
 
-bool firstStep = true;
-bool secondStep = false;
-bool thirdStep = false;
-bool fourthStep = false;
+
 
 void setup()
 {
@@ -65,10 +66,12 @@ void setup()
 
   for (uint16_t i = 0; i < 200; i++)
   {
+    turnLeft(200);
     qtr.calibrate();
   }
+  stopMotor();
   digitalWrite(Buz, LOW); // turn off Arduino's LED to indicate we are through with calibration
-  delay(1000);
+  delay(4000);
   // print the calibration minimum values measured when emitters were on
   Serial.begin(9600);
   for (uint8_t i = 0; i < SensorCount; i++)
@@ -88,6 +91,23 @@ void setup()
 
    //Take threshold values
     Serial.println("Thresholds");
+
+  digitalWrite(Buz, HIGH);
+  delay(400);
+  digitalWrite(Buz,LOW);
+  delay(400);
+  digitalWrite(Buz, HIGH);
+  delay(400);
+  digitalWrite(Buz,LOW);
+  delay(400);
+  digitalWrite(Buz,HIGH);
+  delay(400);
+  digitalWrite(Buz, LOW);
+  delay(400);
+  digitalWrite(Buz,HIGH);
+  delay(400);
+  digitalWrite(Buz, LOW);
+  delay(400);
   
   for (uint8_t i = 0; i < SensorCount; i++)
   {
@@ -107,75 +127,22 @@ void setup()
 
   //buz 4 times
   digitalWrite(Buz, HIGH);
-  delay(1000);
+  delay(4000);
   digitalWrite(Buz, LOW);
   delay(1000);
-  digitalWrite(Buz, HIGH);
-  delay(1000);
-  digitalWrite(Buz, LOW);
-  delay(1000);
-  digitalWrite(Buz, HIGH);
-  delay(1000);
-  digitalWrite(Buz, LOW);
+ 
 
   //servo
   //setupServo(); 
 }
-void PID_control() {
-
-  uint16_t position = qtr.readLineWhite(sensorValues); 
-
-  // uint16_t position = qtr.readLineWhite(sensorValues); 
-  int error = initialPos - position; 
-
-  P = error;
-  I = I + error;
-  D = error - lastError;
-  
-  int motorspeed = P*Kp + I*Ki + D*Kd;
-  
-  int motorspeeda = basespeeda + motorspeed;
-  int motorspeedb = basespeedb - motorspeed;
-
-  // for (uint8_t i = 0; i < SensorCount; i++)
-  // {
-  //   Serial.print(sensorValues[i]);
-  //   Serial.print('\t');
-  // }
-  // Serial.println(position);
-
-  
-
-
-
-  
-  if (motorspeeda > maxspeeda) {
-    motorspeeda = maxspeeda;
-  }
-  if (motorspeedb > maxspeedb) {
-    motorspeedb = maxspeedb;
-  }
-  if (motorspeeda < 0) {
-    motorspeeda = 0;
-  }
-  if (motorspeedb < 0) {
-    motorspeedb = 0;
-  } 
-  lastError = error;
-  //   Serial.print(motorspeeda);
-  // Serial.print('\t');
-  // Serial.print(motorspeedb);
-  // Serial.print('\t');
-  // Serial.println(position);
-  driveMotor(motorspeeda, motorspeedb);
-}
-
-uint16_t line_position = 0;
-
-  //int lastError = 0;
 
 void follow_line() // follow the line
 {
+ 
+  int lastError = 0;
+
+  while (1)
+  {
 
     line_position = qtr.readLineWhite(sensorValues);
 
@@ -183,276 +150,42 @@ void follow_line() // follow the line
     int error1 = error - lastError;
     int error2 = (2.0 / 3.0) * error2 + error;
     int motorSpeed = Kp * error + Kd * error1 + Ki * error2;
-    int rightMotorSpeed = basespeeda - motorSpeed;
-    int leftMotorSpeed = basespeedb + motorSpeed;
-    if (rightMotorSpeed > maxspeeda){
-      rightMotorSpeed = maxspeeda; 
-    }
-    if (leftMotorSpeed > maxspeedb){
-      leftMotorSpeed = maxspeedb; 
-    }
-    if (rightMotorSpeed < 0){
+    int rightMotorSpeed = rightBaseSpeed + motorSpeed;
+    int leftMotorSpeed = leftBaseSpeed - motorSpeed;
+    if (rightMotorSpeed > rightMaxSpeed)
+      rightMotorSpeed = rightMaxSpeed; // prevent the motor from going beyond max speed
+    if (leftMotorSpeed > leftMaxSpeed)
+      leftMotorSpeed = leftMaxSpeed; // prevent the motor from going beyond max speed
+    if (rightMotorSpeed < 0)
       rightMotorSpeed = 0;
-
-    }
-    if (leftMotorSpeed < 0){
+    if (leftMotorSpeed < 0)
       leftMotorSpeed = 0;
-
-    }
     
-  
-  
-    driveMotor(rightMotorSpeed, leftMotorSpeed);
+    driveMotor(leftMotorSpeed,rightMotorSpeed);
 
     lastError = error;
 
     qtr.readLineWhite(sensorValues);
-
-    if (sensorValues[3] < 700)
+    if (sensorValues[4] < threshold || sensorValues[11] < threshold)
     {
-      driveMotor(150, 150);
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
       return;
     }
-
-    // if (sensorValues[0] < 700 || sensorValues[1] < 700 || sensorValues[2] < 700 || sensorValues[3] < 700 || sensorValues[4] < 700 || sensorValues[5] < 700 || sensorValues[6] < 700 || sensorValues[7] < 700 || sensorValues[8])
-    // {
-
-    //   driveMotor(150, 150);
-    //   return;
-    // }
-    
-
-    
-    // if (sensorValues[0] < sensorThresholds[0] && sensorValues[1] < sensorThresholds[1] && sensorValues[2] < sensorThresholds[2] && sensorValues[3] < sensorThresholds[3] && sensorValues[4] < sensorThresholds[4] && sensorValues[5] < sensorThresholds[5] && sensorValues[6] < sensorThresholds[6]&& sensorValues[7] < sensorThresholds[7]&& sensorValues[8] < sensorThresholds[8]&& sensorValues[9] < sensorThresholds[9]&& sensorValues[10] < sensorThresholds[10])
-    // {
-
-    //   driveMotor(150, 150);
-    //   return;
-    // }
-  
-}
-
-void turn(char dir)
-{
-  switch (dir)
-  {
-  case 'R':
-    
-    driveMotor(0, 200);
-    line_position = qtr.readLineWhite(sensorValues);
-
-    while (sensorValues[15] < sensorThresholds[0])
+    if (sensorValues[3] < threshold && sensorValues[4] < threshold && sensorValues[5] < threshold && sensorValues[6] < threshold && sensorValues[7] < threshold && sensorValues[8] < threshold && sensorValues[9] < threshold&& sensorValues[10] < threshold&& sensorValues[11] < threshold&& sensorValues[12] < threshold)
     {
-          line_position = qtr.readLineWhite(sensorValues);
 
+     driveMotor(leftBaseSpeed,rightBaseSpeed);
+      return;
     }
-
-    line_position = qtr.readLineWhite(sensorValues);
-
-    while (sensorValues[12] < sensorThresholds[2] || sensorValues[13] < sensorThresholds[3]) // wait for outer most sensor to find the line
-    {
-      line_position = qtr.readLineWhite(sensorValues);
-    }
-
-    driveMotor(0, 200);
-    break;
-
-  // Turn right 90deg
-  case 'L':
-    driveMotor(200, 0);
-    line_position = qtr.readLineWhite(sensorValues);
-
-    while (sensorValues[0] < sensorThresholds[0]) // wait for outer most sensor to find the line
-    {
-      line_position = qtr.readLineWhite(sensorValues);
-    }
-    line_position = qtr.readLineWhite(sensorValues);
-
-    while (sensorValues[2] < sensorThresholds[2] || sensorValues[3] < sensorThresholds[3]) // wait for outer most sensor to find the line
-    {
-          line_position = qtr.readLineWhite(sensorValues);
-
-    }
-
-    driveMotor(200, 0);
-    
-    break;
-
-  // Turn right 180deg to go back
-  case 'B':
-    
-     turnRight(200);
-
-      line_position = qtr.readLineWhite(sensorValues);
-
-      while (sensorValues[15] < 700)  // wait for outer most sensor to find the line
-      {
-        line_position = qtr.readLineWhite(sensorValues);
-      }
-      line_position = qtr.readLineWhite(sensorValues);
-
-      while (sensorValues[14] < 700 || sensorValues[13] < 700) // wait for outer most sensor to find the line
-      {
-        line_position = qtr.readLineWhite(sensorValues);
-      }
-
-      
-      break;
-   
-    break;
-
-  case 'S':
-
-    break;
   }
 }
 
 
-  bool gobackone=true;
 
 void loop()
 {
   
-
-  //Serial.println(GetColors());
-  
-  
-
-  // while (1)
-  // {
-  
-
-  //     follow_line();
-  //    qtr.readLineWhite(sensorValues);
-  //     if (sensorValues[15] < 700){
-  //     stopMotor();
-  //     driveBackMotor(200,200);
-  //     delay(200);
-  //     //delay(2000);
-  //     digitalWrite(Buz, HIGH);
-  //     turn('R');
-  //     break;
-  //   }else{
-  //     digitalWrite(Buz, LOW);
-  //   }
-     
-    
-      
-  // }
-
-  
-  // grip1(100);
-
-
-  
-
-
-  driveMotor(160, 140);
-  delay(1000);
-
-  while (firstStep)
-  {
     follow_line();
-    if(getForwardDistance()<5){
-      stopMotor();
-      firstStep=false;
-
-      delay(1000);
-      
-    }
-  }
-
-  setupFrontColorSensor();
-  delay(1000);
-  if(GetColorsForward()==3){
-        driveBackMotor(200,200);
-        delay(150);
-        stopMotor();
-        secondStep=true;
-      }
-
-  delay(1000);
-
-  while (secondStep){
-    turn('B');
-    qtr.readLineWhite(sensorValues);
-    if(sensorValues[10]<700){
-      stopMotor();
-      delay(1000);
-      secondStep=false;
-      thirdStep=true;
-    }
-  }
-  setupFloorColorSensor();
-  delay(1000);
-
-  //warining
-  bool firstTurnTaken=false;
-  bool secondTurnTaken=false;
-
-  while (thirdStep)
-  {
-  
-
-
-      follow_line();
-     qtr.readLineWhite(sensorValues);
-
-     if(sensorValues[0] < 700 && sensorValues[7]<700){
-      stopMotor();
-      driveBackMotor(200,200);
-      delay(200);
-      //delay(2000);
-      turn('L');
-      firstTurnTaken=true;
-     }
-    else
-      if (sensorValues[15] < 700){
-      stopMotor();
-      driveBackMotor(200,200);
-      delay(200);
-      //delay(2000);
-      turn('R');
-      
-    }
-
-   
-    
-    
-      
-  }
-
-  // while (fourthStep)
-  // {
-
-    
-
-  //   follow_line();
-  //    qtr.readLineWhite(sensorValues);
-  //   if (sensorValues[0] < 700){
-  //     stopMotor();
-  //     driveBackMotor(200,200);
-  //     delay(200);
-  //     //delay(2000);
-  //     turn('L');
-      
-  //   }else
-  //   if(gobackone){
-  //     stopMotor();
-  //     driveBackMotor(200,200);
-  //     delay(200);
-  //     gobackone=false;
-  //   }else{
-      
-  //   }
-
-   
-  // }
-  
-
-  
-    
-
 }
 
 
