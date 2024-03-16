@@ -51,8 +51,8 @@ const uint8_t leftBaseSpeed = 130;
 
 void setup()
 {
-  irSetup();
-  forwardDistanceSetup();
+  // irSetup();
+  // forwardDistanceSetup();
  
   // configure the sensors
   qtr.setTypeAnalog();
@@ -66,7 +66,7 @@ void setup()
 
   for (uint16_t i = 0; i < 200; i++)
   {
-    turnLeft(200);
+    //turnLeft(200);
     qtr.calibrate();
   }
   stopMotor();
@@ -136,6 +136,122 @@ void setup()
   //setupServo(); 
 }
 
+
+void turn(char dir)
+{
+  switch (dir)
+  {
+  case 'L':
+    turnLeftSmooth(200);
+    line_position = qtr.readLineWhite(sensorValues);
+
+    //intially it was 0. can generate turn erros
+    while (sensorValues[3] > threshold)
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+
+    line_position = qtr.readLineWhite(sensorValues);
+
+    while (sensorValues[6] > threshold || sensorValues[7] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+
+    //warn: change to ready motor for forward motion
+
+    stopMotor();
+    break;
+
+  // Turn right 90deg
+  // case 'R':
+  //   digitalLow(rightMotor1);
+  //   digitalHigh(rightMotor2);
+  //   digitalLow(leftMotor1);
+  //   digitalHigh(leftMotor2);
+  //   analogWrite(rightMotorPWM, speedturn);
+  //   analogWrite(leftMotorPWM, speedturn);
+  //   line_position = qtrrc.readLine(sensorValues);
+
+  //   while (sensorValues[6] < threshold) // wait for outer most sensor to find the line
+  //   {
+  //     line_position = qtrrc.readLine(sensorValues);
+  //   }
+  //   line_position = qtrrc.readLine(sensorValues);
+
+  //   while (sensorValues[4] < threshold || sensorValues[3] < threshold) // wait for outer most sensor to find the line
+  //   {
+  //     line_position = qtrrc.readLine(sensorValues);
+  //   }
+
+  //   digitalLow(rightMotor1);
+  //   digitalHigh(rightMotor2);
+  //   digitalLow(leftMotor1);
+  //   digitalHigh(leftMotor2);    
+  //   analogWrite(leftMotorPWM, 255);
+  //   break;
+
+  // // Turn right 180deg to go back
+  // case 'B':
+  //   digitalLow(rightMotor1);
+  //   digitalHigh(rightMotor2);
+  //   digitalLow(leftMotor1);
+  //   digitalHigh(leftMotor2);
+  //   analogWrite(rightMotorPWM, speedturn);
+  //   analogWrite(leftMotorPWM, speedturn);
+  //   line_position = qtrrc.readLine(sensorValues);
+
+  //   while (sensorValues[6] < threshold) // wait for outer most sensor to find the line
+  //   {
+  //     line_position = qtrrc.readLine(sensorValues);
+  //   }
+  //   line_position = qtrrc.readLine(sensorValues);
+
+  //   while (sensorValues[4] < threshold || sensorValues[3] < threshold) // wait for outer most sensor to find the line
+  //   {
+  //     line_position = qtrrc.readLine(sensorValues);
+  //   }
+
+  //   digitalLow(rightMotor1);
+  //   digitalHigh(rightMotor2);
+  //   digitalLow(leftMotor1);
+  //   digitalHigh(leftMotor2);
+  //   analogWrite(leftMotorPWM, 255);
+  //   break;
+
+  // case 'S':
+
+  //   break;
+   }
+}
+
+
+void QTR_TEST() {
+
+  uint16_t position = qtr.readLineWhite(sensorValues); 
+
+  // uint16_t position = qtr.readLineWhite(sensorValues); 
+  int error = initialPos - position; 
+
+
+ 
+
+
+  
+
+  for (uint8_t i = 0; i < SensorCount; i++)
+  {
+    Serial.print(sensorValues[i]);
+    Serial.print('\t');
+  }
+   Serial.print("Position: ");
+  Serial.print(position);
+  Serial.print(" Error: ");
+  Serial.println(error);
+
+ 
+}
+
 void follow_line() // follow the line
 {
  
@@ -185,7 +301,25 @@ void follow_line() // follow the line
 void loop()
 {
   
-    follow_line();
+    // while (1)
+    // {
+    //   follow_line();
+    //   unsigned char found_left = 0;
+    //   unsigned char found_straight = 0;
+    //   unsigned char found_right = 0;
+    //   qtr.readLine(sensorValues);
+
+    // }
+
+    //turn('L');
+
+      // turn('L');
+      
+      // delay(5000);
+      
+      QTR_TEST();
+      delay(200);
+    
 }
 
 

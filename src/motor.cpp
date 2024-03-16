@@ -50,9 +50,25 @@ void turnRight(uint8_t speed)
   right.run(FORWARD);
 }
 
+void turnRightSmooth(uint8_t speed)
+{
+  left.setSpeed(speed);
+  right.setSpeed(0);
+  left.run(BACKWARD);
+  right.run(FORWARD);
+}
+
 void turnLeft(uint8_t speed)
 {
   left.setSpeed(speed);
+  right.setSpeed(speed);
+  left.run(FORWARD);
+  right.run(BACKWARD);
+}
+
+void turnLeftSmooth(uint8_t speed)
+{
+  left.setSpeed(0);
   right.setSpeed(speed);
   left.run(FORWARD);
   right.run(BACKWARD);
