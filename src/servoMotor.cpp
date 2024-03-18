@@ -1,5 +1,4 @@
-#include <Servo.h>
-#include <Arduino.h>
+#include <servoMotor.h>
 
 #define LIFT_UP 0
 #define LIFT_DOWN 100
