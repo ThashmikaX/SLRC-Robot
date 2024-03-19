@@ -7,5 +7,9 @@
 void setupServo();
 void gripOpen();
 void gripClose();
+void liftUp();
+void liftDown();
+void armUp();
+void armDown();
 
 #endif // SERVOMOTOR_H
