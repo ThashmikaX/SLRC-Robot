@@ -42,28 +42,30 @@ int D;
 
 int lastError = 0;
 
-const uint8_t rightMaxSpeed = 220;
-const uint8_t leftMaxSpeed = 220;
-const uint8_t rightBaseSpeed = 160;
-const uint8_t leftBaseSpeed = 130;
+const uint8_t rightMaxSpeed = 180;
+const uint8_t leftMaxSpeed = 180;
+const uint8_t rightBaseSpeed = 120;
+const uint8_t leftBaseSpeed = 120;
 
 
 
 void setup()
 {
   // irSetup();
-  // forwardDistanceSetup();
+   forwardDistanceSetup();
  
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A8, A9, A10, A11, A12,A13,A14,A15,A0, A1, A2, A3, A4, A5,A6,A7}, SensorCount);
-  qtr.setEmitterPin(2);
+
   //qtr.setEmitterPin(13);
+  qtr.emittersOff();
 
   delay(500);
   pinMode(Buz, OUTPUT);
   digitalWrite(Buz, HIGH); // turn on Arduino's LED to indicate we are in calibration mode
 
+  turnLeft(200);
   for (uint16_t i = 0; i < 200; i++)
   {
     //turnLeft(200);
@@ -164,64 +166,48 @@ void turn(char dir)
     break;
 
   // Turn right 90deg
-  // case 'R':
-  //   digitalLow(rightMotor1);
-  //   digitalHigh(rightMotor2);
-  //   digitalLow(leftMotor1);
-  //   digitalHigh(leftMotor2);
-  //   analogWrite(rightMotorPWM, speedturn);
-  //   analogWrite(leftMotorPWM, speedturn);
-  //   line_position = qtrrc.readLine(sensorValues);
+  case 'R':
+    
+    turnRightSmooth(200);
+    line_position = qtr.readLineWhite(sensorValues);
 
-  //   while (sensorValues[6] < threshold) // wait for outer most sensor to find the line
-  //   {
-  //     line_position = qtrrc.readLine(sensorValues);
-  //   }
-  //   line_position = qtrrc.readLine(sensorValues);
+    while (sensorValues[12] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+    line_position = qtr.readLineWhite(sensorValues);
 
-  //   while (sensorValues[4] < threshold || sensorValues[3] < threshold) // wait for outer most sensor to find the line
-  //   {
-  //     line_position = qtrrc.readLine(sensorValues);
-  //   }
+    while (sensorValues[9] > threshold || sensorValues[10] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
 
-  //   digitalLow(rightMotor1);
-  //   digitalHigh(rightMotor2);
-  //   digitalLow(leftMotor1);
-  //   digitalHigh(leftMotor2);    
-  //   analogWrite(leftMotorPWM, 255);
-  //   break;
+    stopMotor();
+    break;
 
   // // Turn right 180deg to go back
-  // case 'B':
-  //   digitalLow(rightMotor1);
-  //   digitalHigh(rightMotor2);
-  //   digitalLow(leftMotor1);
-  //   digitalHigh(leftMotor2);
-  //   analogWrite(rightMotorPWM, speedturn);
-  //   analogWrite(leftMotorPWM, speedturn);
-  //   line_position = qtrrc.readLine(sensorValues);
+  case 'B':
 
-  //   while (sensorValues[6] < threshold) // wait for outer most sensor to find the line
-  //   {
-  //     line_position = qtrrc.readLine(sensorValues);
-  //   }
-  //   line_position = qtrrc.readLine(sensorValues);
+     turnRight(130);
+    line_position = qtr.readLineWhite(sensorValues);
 
-  //   while (sensorValues[4] < threshold || sensorValues[3] < threshold) // wait for outer most sensor to find the line
-  //   {
-  //     line_position = qtrrc.readLine(sensorValues);
-  //   }
+    while (sensorValues[12] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+    line_position = qtr.readLineWhite(sensorValues);
 
-  //   digitalLow(rightMotor1);
-  //   digitalHigh(rightMotor2);
-  //   digitalLow(leftMotor1);
-  //   digitalHigh(leftMotor2);
-  //   analogWrite(leftMotorPWM, 255);
-  //   break;
+    while (sensorValues[9] > threshold || sensorValues[10] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
 
-  // case 'S':
+    stopMotor();
+    break;
 
-  //   break;
+  case 'S':
+
+    break;
    }
 }
 
@@ -252,11 +238,12 @@ void QTR_TEST() {
  
 }
 
+  int forwardDist = 0;
+
 void follow_line() // follow the line
 {
  
   int lastError = 0;
-
   while (1)
   {
 
@@ -281,6 +268,7 @@ void follow_line() // follow the line
 
     lastError = error;
 
+    forwardDist = getForwardDistance();
     qtr.readLineWhite(sensorValues);
     if (sensorValues[4] < threshold || sensorValues[11] < threshold)
     {
@@ -293,11 +281,17 @@ void follow_line() // follow the line
      driveMotor(leftBaseSpeed,rightBaseSpeed);
       return;
     }
+
+    
+
+   
   }
 }
 
 
-
+      bool s1=true;
+      bool s2=false;
+      bool s3=false;
 void loop()
 {
   
@@ -316,10 +310,19 @@ void loop()
       // turn('L');
       
       // delay(5000);
+
+
+      while (s1)
+      {
+          follow_line();
+      }
+
+      delay(1000);
+      turn('B');
+      delay(1000);
+
+   
       
-      QTR_TEST();
-      delay(200);
-    
 }
 
 
