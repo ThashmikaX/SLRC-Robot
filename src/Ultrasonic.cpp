@@ -19,7 +19,7 @@ int getForwardDistance() {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  u_duration = pulseIn(echoPin, HIGH,5000);
+  u_duration = pulseIn(echoPin, HIGH,30000);
   // Calculating the u_distance
   u_distance = u_duration * 0.034 / 2;
   // Prints the u_distance on the Serial Monitor
