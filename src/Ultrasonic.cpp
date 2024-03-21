@@ -10,6 +10,11 @@ void forwardDistanceSetup() {
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 }
 
+void backwardDistanceSetup() {
+  pinMode(trigPin2, OUTPUT); // Sets the trigPin as an Output
+  pinMode(echoPin2, INPUT); // Sets the echoPin as an Input
+}
+
 int getForwardDistance() {
 // Clears the trigPin
   digitalWrite(trigPin, LOW);
@@ -20,6 +25,24 @@ int getForwardDistance() {
   digitalWrite(trigPin, LOW);
   // Reads the echoPin, returns the sound wave travel time in microseconds
   u_duration = pulseIn(echoPin, HIGH,30000);
+  // Calculating the u_distance
+  u_distance = u_duration * 0.034 / 2;
+  // Prints the u_distance on the Serial Monitor
+//   Serial.print("u_distance: ");
+//   Serial.println(u_distance);
+  return u_distance;
+}
+
+int getBackwardDistance() {
+// Clears the trigPin
+  digitalWrite(trigPin2, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin2, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  u_duration = pulseIn(echoPin2, HIGH,5000);
   // Calculating the u_distance
   u_distance = u_duration * 0.034 / 2;
   // Prints the u_distance on the Serial Monitor
