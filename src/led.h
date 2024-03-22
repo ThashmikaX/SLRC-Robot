@@ -1,6 +1,8 @@
 #ifndef LED_H
 #define LED_H
 
+#include <Arduino.h>
+
 const int Blue = 50;
 const int Green = 51;
 

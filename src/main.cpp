@@ -8,6 +8,7 @@
 #include <color.h>
 
 #include <Ultrasonic.h>
+#include <led.h>
 
 #define Buz 22
 
@@ -21,11 +22,15 @@
 #define QTR7 7
 
 #define BUTTON_PIN 2
+#define CALIBRATE_BUTTON_PIN 18
 
 #define threshold 700
 
-volatile byte ledState = LOW;
+#define CYLINDER 0
+#define SQUARE 1
 
+
+volatile byte ledState = LOW;
 
 QTRSensors qtr;
 
@@ -54,8 +59,10 @@ const uint8_t leftBaseSpeed = 150;
 
 uint8_t forwardColor = 10;
 uint8_t floorColor = 0;
+uint8_t shape = CYLINDER; //0 - cylinder, 1 - cube
 
 bool startPos=false;
+bool isc = true;
 
 
 void onStartClick(){
@@ -63,6 +70,10 @@ void onStartClick(){
   
 }
 
+void onCalibrateClick(){
+  isc=true;
+
+}
 
 void setup()
 {
@@ -150,6 +161,7 @@ void setup()
  
   pinMode(BUTTON_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), onStartClick, RISING);
+  attachInterrupt(digitalPinToInterrupt(CALIBRATE_BUTTON_PIN), onCalibrateClick, RISING);
   delay(500);
 
   //servo
@@ -348,6 +360,59 @@ void follow_line() // follow the line
   }
 }
 
+
+
+void follow_line_back() // follow the line
+{
+ 
+  int lastError = 0;
+  while (1)
+  {
+
+    line_position = qtr.readLineWhite(sensorValues);
+    
+    //reverse sensor values array
+    
+
+    int error = line_position - initialPos;
+    int error1 = error - lastError;
+    int error2 = (2.0 / 3.0) * error2 + error;
+    int motorSpeed = Kp * error + Kd * error1 + Ki * error2;
+    int rightMotorSpeed = rightBaseSpeed + motorSpeed;
+    int leftMotorSpeed = leftBaseSpeed - motorSpeed;
+    if (rightMotorSpeed > rightMaxSpeed)
+      rightMotorSpeed = rightMaxSpeed; // prevent the motor from going beyond max speed
+    if (leftMotorSpeed > leftMaxSpeed)
+      leftMotorSpeed = leftMaxSpeed; // prevent the motor from going beyond max speed
+    if (rightMotorSpeed < 0)
+      rightMotorSpeed = 0;
+    if (leftMotorSpeed < 0)
+      leftMotorSpeed = 0;
+    
+    driveBackMotor(leftMotorSpeed,rightMotorSpeed);
+
+    lastError = error;
+
+    qtr.readLineWhite(sensorValues);
+    if (sensorValues[0] < threshold || sensorValues[15] < threshold)
+    {
+      driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+      return;
+    }
+    if (sensorValues[3] < threshold && sensorValues[4] < threshold && sensorValues[5] < threshold && sensorValues[6] < threshold && sensorValues[7] < threshold && sensorValues[8] < threshold && sensorValues[9] < threshold&& sensorValues[10] < threshold&& sensorValues[11] < threshold&& sensorValues[12] < threshold)
+    {
+
+     driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+      return;
+    }
+
+    
+
+   
+  }
+}
+
+
 void follow_line_with_ds() // follow the line
 {
  
@@ -378,7 +443,7 @@ void follow_line_with_ds() // follow the line
 
     qtr.readLineWhite(sensorValues);
     uint8_t fd =getForwardDistance();
-    if(fd<12 && fd>8){
+    if(fd<10 && fd>5){
       return;
     }
 
@@ -485,11 +550,23 @@ void rightWay(){
 
       delay(1000);
 
+      //run in circle
       while (s11)
       {
         follow_line();
         if(sensorValues[12]<threshold){
               stopMotorHard();
+
+              if (isc)
+              {
+                //turn on green
+                onGreen();
+              }else{
+                //turn on blue
+                onBlue();
+              }
+              
+
               delay(1000);
               turn('R');
               s11=false;
@@ -639,7 +716,7 @@ void startRobot(){
       while (s2)
       {
         follow_line_with_ds();
-        if(getForwardDistance()<12 && getForwardDistance()>8){
+        if(getForwardDistance()<10 && getForwardDistance()>5){
             stopMotorHard();
             delay(200);
             s2=false;
@@ -770,7 +847,12 @@ void loop()
   
   //startRobot();
 
-
+ 
+  while (1)
+  {
+    follow_line_back();
+  }
+  
   
 
   if (startPos)
