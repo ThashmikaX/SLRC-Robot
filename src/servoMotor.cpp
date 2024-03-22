@@ -56,6 +56,7 @@ void gripClose()
 void servoDetach()
 {
     rightServo.detach();
+    delay(100);
     leftServo.detach();
 }
 
