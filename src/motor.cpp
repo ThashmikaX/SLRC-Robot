@@ -57,6 +57,16 @@ void stopMotor()
   right.run(RELEASE);
 }
 
+void stopMotorHard()
+{
+  stopMotor();
+  delay(55);
+  driveBackMotor(250, 250);
+  delay(10);
+  stopMotor();
+
+}
+
 void driveBackMotor(uint8_t leftSpeed, uint8_t rightSpeed)
 {
   left.setSpeed(rightSpeed);

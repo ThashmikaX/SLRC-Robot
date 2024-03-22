@@ -20,7 +20,12 @@
 #define QTR6 6
 #define QTR7 7
 
+#define BUTTON_PIN 2
+
 #define threshold 700
+
+volatile byte ledState = LOW;
+
 
 QTRSensors qtr;
 
@@ -42,12 +47,21 @@ int D;
 
 int lastError = 0;
 
-const uint8_t rightMaxSpeed = 180;
-const uint8_t leftMaxSpeed = 180;
+const uint8_t rightMaxSpeed = 200;
+const uint8_t leftMaxSpeed = 200;
 const uint8_t rightBaseSpeed = 150;
 const uint8_t leftBaseSpeed = 150;
 
-uint8_t forwardColor = 0;
+uint8_t forwardColor = 10;
+uint8_t floorColor = 0;
+
+bool startPos=false;
+
+
+void onStartClick(){
+  startPos=true;
+  
+}
 
 
 void setup()
@@ -134,6 +148,9 @@ void setup()
   digitalWrite(Buz, LOW);
   delay(1000);
  
+  pinMode(BUTTON_PIN, INPUT);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), onStartClick, RISING);
+  delay(500);
 
   //servo
   //setupServo(); 
@@ -202,7 +219,9 @@ void turn(char dir)
     {
       line_position = qtr.readLineWhite(sensorValues);
     }
-
+    stopMotor();
+    turnLeft(200);
+    delay(100);
     stopMotor();
     break;
 
@@ -311,7 +330,7 @@ void follow_line() // follow the line
     lastError = error;
 
     qtr.readLineWhite(sensorValues);
-    if (sensorValues[4] < threshold || sensorValues[11] < threshold)
+    if (sensorValues[0] < threshold || sensorValues[15] < threshold)
     {
       driveMotor(leftBaseSpeed,rightBaseSpeed);
       return;
@@ -359,7 +378,7 @@ void follow_line_with_ds() // follow the line
 
     qtr.readLineWhite(sensorValues);
     uint8_t fd =getForwardDistance();
-    if(fd<15 && fd>10){
+    if(fd<12 && fd>8){
       return;
     }
 
@@ -400,7 +419,8 @@ void follow_line_with_floor_color() // follow the line
 
     qtr.readLineWhite(sensorValues);
     
-    if(GetColorsFloor()==forwardColor){
+      floorColor = GetColorsFloor();
+    if(floorColor==0 || floorColor==1 || floorColor==2 || floorColor==3){
       return;
     }
 
@@ -415,8 +435,7 @@ void follow_line_with_floor_color() // follow the line
 
 
 
-
-bool s1=true;
+bool s1=false;
 bool s2=false;
 bool s3=false;
 bool s4 =false;
@@ -433,12 +452,177 @@ bool s14 =false;
 bool s15 =false;
 bool s16 =false;
 
-
-void loop()
-{
+void rightWay(){
   
-  
+      //stopMotorHard();
+      delay(1000);
+      s9=true;
+      while (s9)
+      {
+        follow_line();
+        if(sensorValues[4]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('L');
+              s9=false;
+              s10=true;
+            }
+      }
 
+      delay(1000);
+
+      while (s10)
+      {
+        follow_line();
+        if(sensorValues[3]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('L');
+              s10=false;
+              s11=true;
+            }
+      }
+
+      delay(1000);
+
+      while (s11)
+      {
+        follow_line();
+        if(sensorValues[12]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('R');
+              s11=false;
+              s12=true;
+            }
+      }
+      
+
+      delay(25000);
+}
+
+void leftWay(){
+  
+      //stopMotorHard();
+      delay(1000);
+      s9=true;
+      while (s9)
+      {
+        follow_line();
+        if(sensorValues[15]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('R');
+              s9=false;
+              s10=true;
+            }
+      }
+
+      delay(1000);
+
+      while (s10)
+      {
+        follow_line();
+        if(sensorValues[0]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('L');
+              s10=false;
+              s11=true;
+            }
+      }
+
+      delay(1000);
+
+      while (s11)
+      {
+        follow_line();
+        if(sensorValues[0]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('L');
+              s11=false;
+              s12=true;
+            }
+      }
+      
+      //start going away from circle
+      delay(1000);
+      while (s12)
+      {
+        follow_line();
+        if(sensorValues[0]<threshold){
+              stopMotorHard();
+              delay(1000);
+              turn('L');
+              s12=false;
+              s13=true;
+            }
+      }
+
+      delay(1000);
+
+      //stop at color wheel
+      while(s13){
+        follow_line();
+        if(sensorValues[15]<threshold){
+          stopMotorHard();
+          floorColor=GetColorsFloor();  
+          delay(1000);
+          s13=false;
+          s14=true;
+        }
+      }
+
+      delay(1000);
+
+       //drive untill middle sensor finds the line
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(200);
+      line_position=qtr.readLineWhite(sensorValues);
+      while (sensorValues[0]<threshold)
+      {
+        line_position=qtr.readLineWhite(sensorValues);
+      }
+      delay(10);
+      stopMotorHard();
+      delay(1000);
+
+      turn('W');
+      delay(1000);
+
+      //go away from color wheen untill junction
+      while (s14)
+      {
+        follow_line();
+        if(sensorValues[0]<threshold){
+              stopMotorHard();
+              delay(1000);
+              
+              s14=false;
+              s15=true;
+            }
+      }
+      
+      
+
+      delay(25000);
+}
+
+void startRobot(){
+  
+      
+
+      while (startPos)
+      {
+        follow_line();
+        line_position=qtr.readLineWhite(sensorValues);
+        if(sensorValues[0]>threshold){
+          startPos=false;
+          s1=true;
+        }
+      }
+      
       //start
       while (s1)
       {
@@ -455,8 +639,8 @@ void loop()
       while (s2)
       {
         follow_line_with_ds();
-        if(getForwardDistance()<15 && getForwardDistance()>10){
-            stopMotor();
+        if(getForwardDistance()<12 && getForwardDistance()>8){
+            stopMotorHard();
             delay(200);
             s2=false;
             s3=true;
@@ -495,7 +679,7 @@ void loop()
       {
        follow_line();
         if(sensorValues[12]<threshold){
-              stopMotor();
+              stopMotorHard();
               delay(1000);
               turn('R');
               s4=false;
@@ -510,7 +694,7 @@ void loop()
       {
        follow_line();
         if(sensorValues[12]<threshold){
-              stopMotor();
+              stopMotorHard();
               delay(1000);
               turn('R');
               s5=false;
@@ -524,8 +708,8 @@ void loop()
       while (s6)
       {
        follow_line();
-        if(sensorValues[4]<threshold){
-              stopMotor();
+        if(sensorValues[0]<threshold){
+              stopMotorHard();
               delay(1000);
               turn('L');
               s6=false;
@@ -535,101 +719,69 @@ void loop()
 
       delay(1000);
 
+
       //stop at color wheel
       while (s7)
       {
-       follow_line_with_floor_color();
-        
-      stopMotor();
-      delay(1000);
-      s7=false;
-      s8=true;
+      follow_line();
+
+      line_position=qtr.readLineWhite(sensorValues);
+      if(sensorValues[4]<threshold){
+        stopMotorHard();
+        floorColor=GetColorsFloor();  
+        delay(1000);
+        s7=false;
+        s8=true;
+      }
+      
             
       }
 
       delay(1000);
 
-      //get floor color
-      uint8_t floorColor=0;
-      while (s8)
-      {
-        uint8_t flc=0;
-        for (uint8_t i = 0; i < 10; i++)
-        {
-          flc+=GetColorsFloor();
-          delay(200);
-        }
-        floorColor=flc/10;
-        delay(100);
-        s8=false;
-        s9=true;
       
-      }
 
       //drive untill middle sensor finds the line
       driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(300);
       line_position=qtr.readLineWhite(sensorValues);
-      while (sensorValues[7]<threshold )
+      while (sensorValues[0]<threshold)
       {
         line_position=qtr.readLineWhite(sensorValues);
       }
-
-      stopMotor();
+      delay(10);
+      stopMotorHard();
       delay(1000);
 
       //turn the direction of color
       if(forwardColor==floorColor){
         turn('D');
+        rightWay();
       }else{
         turn('W');
+        leftWay();
       }
 
-      stopMotor();
-      delay(1000);
 
-      while (s9)
-      {
-        follow_line();
-        if(sensorValues[4]<threshold){
-              stopMotor();
-              delay(1000);
-              turn('L');
-              s9=false;
-              s10=true;
-            }
-      }
-
-      delay(1000);
-
-      while (s10)
-      {
-        follow_line();
-        if(sensorValues[4]<threshold){
-              stopMotor();
-              delay(1000);
-              turn('L');
-              s10=false;
-              s11=true;
-            }
-      }
-
-      delay(1000);
-
-      while (s11)
-      {
-        follow_line();
-        if(sensorValues[12]<threshold){
-              stopMotor();
-              delay(1000);
-              turn('R');
-              s11=false;
-              s12=true;
-            }
-      }
-      
-
-      delay(25000);
-      
 }
 
+void loop()
+{
+  
+  //startRobot();
+
+
+  
+
+  if (startPos)
+  {
+    delay(2000);
+    startRobot();
+    
+  }
+  
+  
+
+        
+}
 
