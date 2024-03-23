@@ -67,6 +67,15 @@ void stopMotorHard()
 
 }
 
+void stopMotorHard_No_Delay()
+{
+  stopMotor();
+  driveBackMotor(250, 250);
+  delay(50);
+  stopMotor();
+
+}
+
 void driveBackMotor(uint8_t leftSpeed, uint8_t rightSpeed)
 {
   left.setSpeed(rightSpeed);
