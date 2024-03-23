@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 const int Blue = 50;
-const int Green = 51;
+const int Green = 23;
 
 void setupLEDs();
 void onBlue();

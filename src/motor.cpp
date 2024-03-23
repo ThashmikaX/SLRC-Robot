@@ -60,7 +60,7 @@ void stopMotor()
 void stopMotorHard()
 {
   stopMotor();
-  delay(60);
+  delay(100);
   driveBackMotor(250, 250);
   delay(10);
   stopMotor();
