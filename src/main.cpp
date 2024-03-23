@@ -57,8 +57,12 @@ int lastError = 0;
 
 const uint8_t rightMaxSpeed = 200;
 const uint8_t leftMaxSpeed = 200;
-const uint8_t rightBaseSpeed = 150;
-const uint8_t leftBaseSpeed = 150;
+ uint8_t rightBaseSpeed = 140;
+ uint8_t leftBaseSpeed = 160;
+
+const uint8_t rightHardBaseSpeed = 180;
+const uint8_t leftHardBaseSpeed = 180;
+
 
 uint8_t forwardColor = 10;
 uint8_t floorColor = 0;
@@ -96,6 +100,7 @@ void setup()
 
   //qtr.setEmitterPin(2);
  
+   
 
   delay(2000);
   pinMode(Buz, OUTPUT);
@@ -254,10 +259,11 @@ void turn(char dir)
 
   case 'P':
 
-     turnRight(200);
+     turnRight(180);
+     delay(350);
     line_position = qtr.readLineWhite(sensorValues);
 
-    while (sensorValues[12] > threshold) // wait for outer most sensor to find the line
+    while (sensorValues[15] > threshold) // wait for outer most sensor to find the line
     {
       line_position = qtr.readLineWhite(sensorValues);
     }
@@ -272,6 +278,32 @@ void turn(char dir)
     delay(100);
     stopMotor();
     break;
+
+  
+
+   case 'H':
+
+     turnRight(220);
+     delay(200);
+    line_position = qtr.readLineWhite(sensorValues);
+
+    while (sensorValues[15] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+    line_position = qtr.readLineWhite(sensorValues);
+
+    while (sensorValues[7] > threshold || sensorValues[8] > threshold) // wait for outer most sensor to find the line
+    {
+      line_position = qtr.readLineWhite(sensorValues);
+    }
+    stopMotor();
+    turnLeft(250);
+    delay(100);
+    stopMotor();
+    break;
+
+
 
   case 'D':
     
@@ -347,6 +379,46 @@ void QTR_TEST() {
 
  
 }
+
+void follow_line_exit_forward() // follow the line
+{
+ 
+  int lastError = 0;
+  while (1)
+  {
+
+    line_position = qtr.readLineWhite(sensorValues);
+
+    int error = line_position - initialPos;
+    int error1 = error - lastError;
+    int error2 = (2.0 / 3.0) * error2 + error;
+    int motorSpeed = Kp * error + Kd * error1 + Ki * error2;
+    int rightMotorSpeed = rightBaseSpeed + motorSpeed;
+    int leftMotorSpeed = leftBaseSpeed - motorSpeed;
+    if (rightMotorSpeed > rightMaxSpeed)
+      rightMotorSpeed = rightMaxSpeed; // prevent the motor from going beyond max speed
+    if (leftMotorSpeed > leftMaxSpeed)
+      leftMotorSpeed = leftMaxSpeed; // prevent the motor from going beyond max speed
+    if (rightMotorSpeed < 0)
+      rightMotorSpeed = 0;
+    if (leftMotorSpeed < 0)
+      leftMotorSpeed = 0;
+    
+    driveMotor(leftMotorSpeed,rightMotorSpeed);
+
+    lastError = error;
+
+    qtr.readLineWhite(sensorValues);
+    if (sensorValues[3] < threshold || sensorValues[12] < threshold)
+    {
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
+      return;
+    }
+   
+  }
+}
+
+
 
 
 void follow_line() // follow the line
@@ -463,7 +535,7 @@ void follow_line_with_object_detection() // follow the line
     uint8_t fd =getForwardDistance();
     if ((fd<12 && fd >0) || sensorValues[2]<threshold)
     {
-        stopMotor();
+        stopMotorHard_No_Delay();
         return;
 
     }
@@ -643,6 +715,121 @@ bool step1= false;
 bool step2= false;
 
 void goToCave(){
+  //ready to go
+  leftBaseSpeed=180;
+  rightBaseSpeed =170;
+
+  step1=true;
+  delay(1000);
+
+  //find color wheel
+  while (step1)
+  {
+    follow_line();
+    line_position = qtr.readLineWhite(sensorValues);
+
+    if (sensorValues[7]<threshold)
+    {
+      stopMotor();
+      step1=false;
+      
+    }
+    
+  }
+  delay(500);
+  step1=true;
+
+  //pass color wheel
+  driveMotor(leftBaseSpeed,rightBaseSpeed);
+  delay(600);
+  stopMotor();
+  //first L
+  while (step1)
+  {
+    follow_line();
+    line_position=qtr.readLineWhite(sensorValues);
+    if (sensorValues[0]<threshold)
+    {
+      stopMotorHard();
+      delay(1000);
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(200);
+      stopMotorHard();
+      delay(1000);
+      turn('L');
+      step1=false;
+    }
+
+    delay(1000);
+    step1=true;
+
+    while (step1)
+    {
+      follow_line_for();
+      delay(5000);
+      stopMotor();
+      delay(1000);
+      setupServo();
+      delay(1000);
+      gripOpen();
+      delay(2000);
+      rightBaseSpeed = 140;
+      leftBaseSpeed = 160;
+      turn('B');
+      step1=false;
+      
+    }
+
+    delay(1000);
+
+    step1=true;
+
+    while (step1)
+    {
+      follow_line();
+      line_position = qtr.readLineWhite(sensorValues);
+      if (sensorValues[0]<threshold)  
+      {
+        stopMotor();
+        delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(200);
+        stopMotorHard();
+        delay(1000);
+        turn('L');
+        step1=false;
+      }
+      
+    }
+
+    delay(1000);
+    step1=true;
+
+    while (step1)
+    {
+      follow_line();
+      line_position = qtr.readLineWhite(sensorValues);
+      if (sensorValues[0]<threshold)  
+      {
+        stopMotor();
+        delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(400);
+        stopMotor();
+        delay(300000);
+      }
+    }
+    
+    
+    
+    
+  }
+
+  
+  
+  
+
+  
 
 }
 void readyToCave(char dir){
@@ -656,6 +843,7 @@ void readyToCave(char dir){
     while (step1)
     {
       follow_line();
+      line_position=qtr.readLineWhite(sensorValues);
       if(sensorValues[0]<threshold){
         stopMotorHard();
         delay(1000);
@@ -673,7 +861,12 @@ void readyToCave(char dir){
     while (step1)
     {
       follow_line();
+      line_position=qtr.readLineWhite(sensorValues);
       if(sensorValues[0]<threshold){
+        stopMotor();
+        delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(200);
         stopMotorHard();
         delay(1000);
         turn('L');
@@ -690,7 +883,12 @@ void readyToCave(char dir){
     while (step1)
     {
       follow_line();
+      line_position=qtr.readLineWhite(sensorValues);
       if(sensorValues[0]<threshold){
+        stopMotor();
+        delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(200);
         stopMotorHard();
         delay(1000);
         turn('R');
@@ -712,52 +910,57 @@ void readyToCave(char dir){
 void grabObjectWay(){
    
       
-      //checkpoint 1 - front check
-
+    //checkpoint 1 - front check
+      s15 = true;
       delay(1000);
 
 
       driveMotor(leftBaseSpeed,rightBaseSpeed);
       delay(200);
-      
+      stopMotor();
       while (s15)
       {
         follow_line_with_object_detection();
-        line_position = qtr.readLineWhite(sensorValues);
         uint8_t fd = getForwardDistance();
 
-
-        if ((fd>0 && fd<12) || sensorValues[4]<threshold)
+        line_position = qtr.readLineWhite(sensorValues);
+        if ((fd>0 && fd<12) || sensorValues[2]<threshold || sensorValues[13]<threshold)
         {
-          stopMotorHard();
-
-          if (fd<12)
+          stopMotor();
+          delay(1000);
+          uint8_t tfd = getForwardDistance();
+          if (tfd<12 && tfd>0)
           {
             //object detected
-
-            follow_line_for();
-            delay(400);
+            digitalWrite(Buz,HIGH);
+            delay(500);
+            digitalWrite(Buz,LOW);
+            
+            follow_line_exit_forward();
+            line_position = qtr.readLineWhite(sensorValues);
+            if(sensorValues[3]<threshold || sensorValues[12]<threshold)
+            {
+            line_position = qtr.readLineWhite(sensorValues);
+            }
+            
             stopMotor();
             setupServo();
             delay(1000);
 
             gripClose();
-            delay(4000);
-            gripClose();
+            delay(2000);
             if(digitalRead(METAL_DETECT_PIN)==1){
               isMetal=true;
             }else{
               isMetal=false;
             }
-            pinMode(METAL_DETECT_PIN,OUTPUT);
-            delay(100);
-            gripClose();
             
             delay(200);
+            pinMode(METAL_DETECT_PIN,OUTPUT);
+
             if(!isMetal){
               //not a metal
-              setupServo();
-              delay(1000);
+              
               gripOpen(); 
               delay(2000);
               servoDetach();
@@ -765,22 +968,30 @@ void grabObjectWay(){
               delay(300);
               stopMotor();
               delay(1000);
-              turn('B');
+              turn('P');
               delay(1000);
               s15 =false;
               s16 =true;
 
             }else{
               //metal
-              gripClose();
-              driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-              gripClose();
-              delay(300);
+
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              
+              
+              // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+              // delay(300);
               stopMotor();
-              gripClose();
               servoDetach();
               delay(1000);
-              turn('P');
+              turn('H');
               delay(1000);
               s15 =false;
               s16 =true;
@@ -791,11 +1002,11 @@ void grabObjectWay(){
             //no object detected
             
             delay(1000);
-            driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-            delay(400);
+            // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+            // delay(400);
             stopMotor();
             delay(1000);
-            turn('B');
+            turn('P');
             delay(1000);
             s15=false;
             s16=true;
@@ -820,61 +1031,78 @@ void grabObjectWay(){
         {
           follow_line();
           if(sensorValues[0]<threshold){
-              stopMotorHard();
+              stopMotor();
               delay(1000);
-              turn('L');
+              driveMotor(leftBaseSpeed,rightBaseSpeed);
+              delay(400);
+              stopMotorHard();
+              turnLeft(leftBaseSpeed);
+              delay(200);
+              delay(1000);
+              turn('W');
+              
+
               s16=false;
               s18=true;
           }
         }
           
       }
-      
 
-     //checkpoint 2 - right check
 
-      delay(1000);
-  
      
+      
+     //checkpoint 2 - right check
+      s15 = true;
+      delay(1000);
 
-      while (s18)
+
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(200);
+      stopMotor();
+      while (s15)
       {
         follow_line_with_object_detection();
-        line_position = qtr.readLineWhite(sensorValues);
         uint8_t fd = getForwardDistance();
 
-
-        if ((fd<12 && fd>0) || sensorValues[4]<threshold)
+        line_position = qtr.readLineWhite(sensorValues);
+        if ((fd>0 && fd<12) || sensorValues[2]<threshold || sensorValues[13]<threshold)
         {
-          stopMotorHard();
-
-          if (fd<12)
+          stopMotor();
+          delay(1000);
+          uint8_t tfd = getForwardDistance();
+          if (tfd<12 && tfd>0)
           {
             //object detected
-
-            follow_line_for();
-            delay(400);
+            digitalWrite(Buz,HIGH);
+            delay(500);
+            digitalWrite(Buz,LOW);
+            
+            follow_line_exit_forward();
+            line_position = qtr.readLineWhite(sensorValues);
+            if(sensorValues[3]<threshold || sensorValues[12]<threshold)
+            {
+            line_position = qtr.readLineWhite(sensorValues);
+            }
+            
             stopMotor();
             setupServo();
             delay(1000);
 
             gripClose();
-            delay(4000);
-            gripClose();
+            delay(2000);
             if(digitalRead(METAL_DETECT_PIN)==1){
               isMetal=true;
             }else{
               isMetal=false;
             }
-            pinMode(METAL_DETECT_PIN,OUTPUT);
-            delay(100);
-            gripClose();
             
             delay(200);
+            pinMode(METAL_DETECT_PIN,OUTPUT);
+
             if(!isMetal){
               //not a metal
-              setupServo();
-              delay(1000);
+              
               gripOpen(); 
               delay(2000);
               servoDetach();
@@ -882,25 +1110,33 @@ void grabObjectWay(){
               delay(300);
               stopMotor();
               delay(1000);
-              turn('B');
+              turn('P');
               delay(1000);
-              s18 =false;
-              s19 =true;
+              s15 =false;
+              s16 =true;
 
             }else{
               //metal
-              gripClose();
-              driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-              gripClose();
-              delay(300);
+
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              
+              
+              // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+              // delay(300);
               stopMotor();
-              gripClose();
               servoDetach();
               delay(1000);
-              turn('P');
+              turn('H');
               delay(1000);
-              s18 =false;
-              s19 =true;
+              s15 =false;
+              s16 =true;
 
             } 
       
@@ -908,14 +1144,14 @@ void grabObjectWay(){
             //no object detected
             
             delay(1000);
-            driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-            delay(400);
+            // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+            // delay(400);
             stopMotor();
             delay(1000);
-            turn('B');
+            turn('P');
             delay(1000);
-            s18=false;
-            s19=true;
+            s15=false;
+            s16=true;
           }
           
         }
@@ -926,86 +1162,87 @@ void grabObjectWay(){
 
       
 
+      
 
       if (isMetal)
       {
         readyToCave('R');
       }else{
         //go to junction
-        while (s19)
+        while (s16)
         {
           follow_line();
           if(sensorValues[0]<threshold){
-              stopMotorHard();
+              stopMotor();
               delay(1000);
-             
-              s19=false;
-              s20=true;
+              driveMotor(leftBaseSpeed,rightBaseSpeed);
+              delay(300);
+              stopMotor();
+              delay(1000);
+              
+              
+
+              s16=false;
               s18=true;
-            }
+          }
+        }
+          
       }
-      
-      
-      }
-      
-
-      //checkpoint 3 - left check
-
-      
-      delay(1000);
+     
     
+      
+       
+     //checkpoint 3 - left check
+      s15 = true;
+      delay(1000);
+
+
       driveMotor(leftBaseSpeed,rightBaseSpeed);
       delay(200);
-
-      // while(s20){
-      //   follow_line();
-      //   if(sensorValues[0]<threshold){
-      //     stopMotorHard();
-      //     delay(1000);
-      //     turn('L');
-      //     s17=false;
-      //     s18=true;
-      //   }
-      // }
-
-      while (s18)
+      stopMotor();
+      while (s15)
       {
         follow_line_with_object_detection();
-        line_position = qtr.readLineWhite(sensorValues);
         uint8_t fd = getForwardDistance();
 
-
-        if ((fd<12 && fd>0) || sensorValues[4]<threshold)
+        line_position = qtr.readLineWhite(sensorValues);
+        if ((fd>0 && fd<12) || sensorValues[2]<threshold || sensorValues[13]<threshold)
         {
           stopMotor();
-
-          if (fd<12)
+          delay(1000);
+          uint8_t tfd = getForwardDistance();
+          if (tfd<12 && tfd>0)
           {
             //object detected
-
-            follow_line_for();
-            delay(400);
+            digitalWrite(Buz,HIGH);
+            delay(500);
+            digitalWrite(Buz,LOW);
+            
+            follow_line_exit_forward();
+            line_position = qtr.readLineWhite(sensorValues);
+            if(sensorValues[3]<threshold || sensorValues[12]<threshold)
+            {
+            line_position = qtr.readLineWhite(sensorValues);
+            }
+            
             stopMotor();
             setupServo();
             delay(1000);
 
             gripClose();
-            delay(4000);
-            gripClose();
+            delay(2000);
             if(digitalRead(METAL_DETECT_PIN)==1){
               isMetal=true;
             }else{
               isMetal=false;
             }
-            pinMode(METAL_DETECT_PIN,OUTPUT);
-            delay(100);
-            gripClose();
             
             delay(200);
+            pinMode(METAL_DETECT_PIN,OUTPUT);
+
             if(!isMetal){
               //not a metal
-              setupServo();
-              delay(1000);
+              
               gripOpen(); 
               delay(2000);
               servoDetach();
@@ -1013,43 +1250,48 @@ void grabObjectWay(){
               delay(300);
               stopMotor();
               delay(1000);
-              turn('B');
+              turn('P');
               delay(1000);
-              s18 =false;
-              s19 =true;
+              s15 =false;
+              s16 =true;
 
             }else{
               //metal
-              gripClose();
-              driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-              gripClose();
-              delay(300);
+
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              digitalWrite(Buz,HIGH);
+              delay(500);
+              digitalWrite(Buz,LOW);
+              delay(500);
+              
+              
+              // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+              // delay(300);
               stopMotor();
-              gripClose();
               servoDetach();
               delay(1000);
-              turn('P');
+              turn('H');
               delay(1000);
-              s18 =false;
-              s19 =true;
+              s15 =false;
+              s16 =true;
 
             } 
       
           }else{
             //no object detected
-            stopMotorHard();
+            
             delay(1000);
-            driveBackMotor(leftBaseSpeed,rightBaseSpeed);
-            delay(400);
+            // driveBackMotor(leftBaseSpeed,rightBaseSpeed);
+            // delay(400);
             stopMotor();
             delay(1000);
-            turn('B');
+            turn('P');
             delay(1000);
-
-            readyToCave('L');
-
-            s18=false;
-            s19=true;
+            s15=false;
+            s16=true;
           }
           
         }
@@ -1060,34 +1302,35 @@ void grabObjectWay(){
 
       
 
+      
 
       if (isMetal)
       {
         readyToCave('L');
       }else{
         //go to junction
-        while (s19)
+        while (s16)
         {
           follow_line();
           if(sensorValues[0]<threshold){
-              stopMotorHard();
+              stopMotor();
               delay(1000);
               driveMotor(leftBaseSpeed,rightBaseSpeed);
-              delay(200);
-              s19=false;
-              s20=true;
-            }
+              delay(300);
+              stopMotor();
+              delay(1000);
+              
+              
+
+              s16=false;
+              s18=true;
+          }
+        }
+          
       }
-      delay(1000);
-      
-      
-      }
+     
+      readyToCave('L');
 
-      turn('R');
-
-
-    
-      
       
       
 }
@@ -1129,7 +1372,7 @@ void rightWay(){
       while (s11)
       {
         follow_line();
-        if(sensorValues[15]<threshold){
+        if(sensorValues[0]<threshold){
               stopMotorHard();
               setupLEDs();
               delay(100);
@@ -1167,12 +1410,27 @@ void rightWay(){
       delay(1000);
 
 
+      // //stop at color wheel
+      // while(s13){
+      //   follow_line();
+      //   if(sensorValues[0]<threshold){
+      //     stopMotorHard();
+      //     //floorColor=GetColorsFloor();  
+      //     delay(1000);
+      //     s13=false;
+      //     s14=true;
+      //   }
+      // }
+
+      // delay(1000);
+
+      
       //stop at color wheel
       while(s13){
         follow_line();
         if(sensorValues[0]<threshold){
           stopMotorHard();
-          floorColor=GetColorsFloor();  
+          //floorColor=GetColorsFloor();  
           delay(1000);
           s13=false;
           s14=true;
@@ -1183,7 +1441,7 @@ void rightWay(){
 
        //drive untill left most sensor finds the black
       driveMotor(leftBaseSpeed,rightBaseSpeed);
-      delay(200);
+      delay(280);
       line_position=qtr.readLineWhite(sensorValues);
       while (sensorValues[0]<threshold)
       {
@@ -1208,7 +1466,7 @@ void rightWay(){
               s15=true;
             }
       }
-     
+    
 
      grabObjectWay();
       
@@ -1295,7 +1553,7 @@ void leftWay(){
         follow_line();
         if(sensorValues[15]<threshold){
           stopMotorHard();
-          floorColor=GetColorsFloor();  
+          //floorColor=GetColorsFloor();  
           delay(1000);
           s13=false;
           s14=true;
@@ -1464,6 +1722,10 @@ void startRobot(){
         if(sensorValues[0]<threshold){
               stopMotorHard();
               delay(1000);
+              driveMotor(leftBaseSpeed,rightBaseSpeed);
+              delay(200);
+              stopMotorHard();
+              delay(1000);
               turn('L');
               s6=false;
               s7=true;
@@ -1496,7 +1758,7 @@ void startRobot(){
 
       //drive untill left sensor finds the black
       driveMotor(leftBaseSpeed,rightBaseSpeed);
-      delay(600);
+      delay(700);
       line_position=qtr.readLineWhite(sensorValues);
       while (sensorValues[0]<threshold)
       {
@@ -1508,9 +1770,16 @@ void startRobot(){
 
       //turn the direction of color
       if(forwardColor==floorColor){
+        turnRight(leftBaseSpeed);
+        delay(100);
+        delay(500);
+        stopMotor();
         turn('D');
         rightWay();
       }else{
+        turnLeft(leftBaseSpeed);
+        delay(100);
+        stopMotor();
         turn('W');
         leftWay();
       }
@@ -1523,6 +1792,22 @@ void loop()
   
 
 
+  
+    
+
+
+  // while (1)
+  // {
+     
+
+
+    
+  //     grabObjectWay();
+
+      
+
+  // }
+  
  
 
   while (!startPos)
