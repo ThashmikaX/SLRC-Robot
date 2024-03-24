@@ -310,7 +310,7 @@ void turn(char dir)
     turnRight(180);
     line_position = qtr.readLineWhite(sensorValues);
 
-    while (sensorValues[11] > threshold) // wait for outer most sensor to find the line
+    while (sensorValues[12] > threshold) // wait for outer most sensor to find the line
     {
       line_position = qtr.readLineWhite(sensorValues);
     }
@@ -748,7 +748,7 @@ void goToCave(){
   {
     follow_line();
     line_position=qtr.readLineWhite(sensorValues);
-    if (sensorValues[0]<threshold)
+    if (sensorValues[0]<threshold || sensorValues[1]<threshold)
     {
       stopMotorHard();
       delay(1000);
@@ -1453,6 +1453,10 @@ void rightWay(){
 
       turn('D');
       delay(1000);
+       driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(200);
+      stopMotor();
+      delay(500);
 
       //go away from color wheen untill junction
       while (s14)
@@ -1576,6 +1580,11 @@ void leftWay(){
 
       turn('W');
       delay(1000);
+
+      driveMotor(leftBaseSpeed,rightBaseSpeed);
+      delay(200);
+      stopMotor();
+      delay(500);
 
       //go away from color wheen untill junction
       while (s14)
@@ -1774,13 +1783,27 @@ void startRobot(){
         delay(100);
         delay(500);
         stopMotor();
+
         turn('D');
+        delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(200);
+        stopMotor();
+        delay(500);
+
         rightWay();
       }else{
         turnLeft(leftBaseSpeed);
         delay(100);
         stopMotor();
         turn('W');
+
+         delay(1000);
+        driveMotor(leftBaseSpeed,rightBaseSpeed);
+        delay(200);
+        stopMotor();
+        delay(500);
+
         leftWay();
       }
 
